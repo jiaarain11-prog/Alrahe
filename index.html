@@ -5,7 +5,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alrahe Label</title>
+    <title>Alrahe Label - Order Management</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
         * {
@@ -100,8 +100,6 @@
             font-size: 16px;
             transition: all 0.3s ease;
             font-family: inherit;
-            -webkit-appearance: none;
-            appearance: none;
         }
 
         input:focus, select:focus {
@@ -110,26 +108,55 @@
             box-shadow: 0 0 0 3px rgba(196, 165, 116, 0.1);
         }
 
-        .price-group {
+        .order-items {
+            border: 2px solid #F4ECD8;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .order-item {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .order-item h4 {
+            margin-bottom: 15px;
+            color: #C4A574;
             display: flex;
-            gap: 10px;
-            align-items: flex-end;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        .price-group .form-group {
-            flex: 1;
-            margin-bottom: 0;
-        }
-
-        .price-group button {
-            padding: 12px 20px;
-            background: #C4A574;
+        .remove-item-btn {
+            background: #f44336;
             color: white;
             border: none;
+            padding: 5px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .add-item-btn {
+            width: 100%;
+            padding: 12px;
+            background: white;
+            border: 2px dashed #C4A574;
+            color: #C4A574;
             border-radius: 10px;
             cursor: pointer;
-            white-space: nowrap;
             font-weight: 600;
+            margin-bottom: 20px;
         }
 
         .btn {
@@ -315,6 +342,7 @@
             z-index: 1000;
             align-items: center;
             justify-content: center;
+            overflow-y: auto;
         }
 
         .modal.show {
@@ -325,10 +353,11 @@
             background: white;
             padding: 30px;
             border-radius: 20px;
-            max-width: 500px;
+            max-width: 700px;
             width: 90%;
             max-height: 90vh;
             overflow-y: auto;
+            margin: 20px;
         }
 
         .modal-header {
@@ -350,26 +379,145 @@
             color: #666;
         }
 
-        .profit-table {
+        .settings-table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 20px;
         }
 
-        .profit-table th, .profit-table td {
-            padding: 12px;
+        .settings-table th, .settings-table td {
+            padding: 10px;
             text-align: left;
             border-bottom: 1px solid #e0e0e0;
+            font-size: 14px;
         }
 
-        .profit-table th {
+        .settings-table th {
             background: #F4ECD8;
             font-weight: 600;
         }
 
-        .profit-table input {
+        .settings-table input {
             width: 100%;
-            padding: 8px;
+            padding: 6px 8px;
+            font-size: 13px;
+        }
+
+        .settings-row {
+            background: #f9f9f9;
+            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .settings-row h4 {
+            color: #C4A574;
+            margin-bottom: 10px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+        }
+
+        .orders-table-container {
+            overflow-x: auto;
+            margin-bottom: 20px;
+        }
+
+        .orders-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+
+        .orders-table th,
+        .orders-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 14px;
+        }
+
+        .orders-table th {
+            background: #F4ECD8;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .orders-table tr:hover {
+            background: #f9f9f9;
+        }
+
+        .orders-table input,
+        .orders-table select {
+            width: 100%;
+            padding: 6px 8px;
+            font-size: 13px;
+        }
+
+        .order-id {
+            font-weight: 600;
+            color: #C4A574;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-completed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-cancelled {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .save-order-btn {
+            background: #C4A574;
+            color: white;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .save-order-btn:hover {
+            background: #8B7355;
+        }
+
+        .filter-section {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-section input,
+        .filter-section select {
+            flex: 1;
+            min-width: 150px;
         }
 
         @keyframes slideIn {
@@ -388,6 +536,10 @@
                 padding: 20px;
             }
             
+            .row {
+                grid-template-columns: 1fr;
+            }
+
             .dashboard-controls {
                 flex-direction: column;
             }
@@ -396,12 +548,8 @@
                 grid-template-columns: 1fr;
             }
 
-            .price-group {
-                flex-direction: column;
-            }
-
-            .price-group button {
-                width: 100%;
+            .settings-table {
+                font-size: 12px;
             }
         }
     </style>
@@ -409,6 +557,7 @@
 <body>
     <div class="nav">
         <button class="nav-btn active" onclick="switchView('order')">New Order</button>
+        <button class="nav-btn" onclick="switchView('myorders')">My Orders</button>
         <button class="nav-btn" onclick="switchView('dashboard')">Dashboard</button>
     </div>
 
@@ -422,18 +571,8 @@
         <div id="orderView" class="view active">
             <form id="orderForm">
                 <div class="form-group">
-                    <label for="date">Date</label>
-                    <input type="date" id="date" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="dressName">Dress Name</label>
-                    <select id="dressName" required onchange="updatePrice()">
-                        <option value="">Select a dress</option>
-                        <option value="Nur">Nur</option>
-                        <option value="Mehr">Mehr</option>
-                        <option value="Hala">Hala</option>
-                    </select>
+                    <label for="orderDate">Date</label>
+                    <input type="date" id="orderDate" required>
                 </div>
 
                 <div class="form-group">
@@ -441,13 +580,12 @@
                     <input type="text" id="clientName" placeholder="Enter client name" required>
                 </div>
 
-                <div class="price-group">
-                    <div class="form-group">
-                        <label for="price">Price (PKR)</label>
-                        <input type="number" id="price" placeholder="Auto-filled" readonly>
-                    </div>
-                    <button type="button" onclick="enablePriceEdit()">Edit Price</button>
+                <div class="order-items" id="orderItems">
+                    <h3 style="margin-bottom: 15px; color: #333;">Order Items</h3>
+                    <!-- Items will be added here -->
                 </div>
+
+                <button type="button" class="add-item-btn" onclick="addOrderItem()">+ Add Another Dress</button>
 
                 <div class="form-group">
                     <label for="advancePayment">Advance Payment (PKR)</label>
@@ -460,6 +598,55 @@
             <div class="loading" id="loading">Submitting order...</div>
             <div class="success-message" id="successMessage">✓ Order submitted successfully!</div>
             <div class="error-message" id="errorMessage">✗ Failed to submit. Please check your input.</div>
+        </div>
+
+        <!-- MY ORDERS VIEW -->
+        <div id="myOrdersView" class="view">
+            <div class="filter-section">
+                <input type="text" id="searchClient" placeholder="Search by client name..." onkeyup="filterOrders()">
+                <select id="filterStatus" onchange="filterOrders()">
+                    <option value="">All Status</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Cancelled">Cancelled</option>
+                </select>
+                <select id="filterDress" onchange="filterOrders()">
+                    <option value="">All Dresses</option>
+                    <option value="Nur">Nur</option>
+                    <option value="Mehr">Mehr</option>
+                    <option value="Hala">Hala</option>
+                </select>
+            </div>
+
+            <div class="orders-table-container">
+                <table class="orders-table">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Date</th>
+                            <th>Client</th>
+                            <th>Dress</th>
+                            <th>Qty</th>
+                            <th>Total</th>
+                            <th>Advance</th>
+                            <th>Remaining</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ordersTableBody">
+                        <!-- Orders will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="ordersLoading" style="text-align: center; padding: 40px; color: #666;">
+                Loading orders...
+            </div>
+
+            <div id="noOrders" style="text-align: center; padding: 40px; color: #666; display: none;">
+                No orders found
+            </div>
         </div>
 
         <!-- DASHBOARD VIEW -->
@@ -476,7 +663,7 @@
                     <option value="byDress">By Dress</option>
                 </select>
                 <button class="btn" onclick="loadDashboard()">Refresh</button>
-                <button class="btn btn-secondary" onclick="openProfitSettings()">⚙️ Profit Settings</button>
+                <button class="btn btn-secondary" onclick="openProfitSettings()">⚙️ Price & Profit Settings</button>
             </div>
 
             <div id="statsContainer"></div>
@@ -521,20 +708,11 @@
     <div class="modal" id="profitModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Profit Margin Settings</h2>
+                <h2>Price & Profit Margin Settings</h2>
                 <button class="close-btn" onclick="closeProfitSettings()">&times;</button>
             </div>
-            <table class="profit-table">
-                <thead>
-                    <tr>
-                        <th>Dress Name</th>
-                        <th>Price (PKR)</th>
-                        <th>Profit Margin (PKR)</th>
-                    </tr>
-                </thead>
-                <tbody id="profitSettingsTable"></tbody>
-            </table>
-            <button class="btn" onclick="saveProfitSettings()">Save Settings</button>
+            <div id="settingsContainer"></div>
+            <button class="btn" onclick="saveProfitSettings()">Save All Settings</button>
         </div>
     </div>
 
@@ -543,85 +721,116 @@
         
         let ordersData = [];
         let expensesData = [];
-        let settingsData = {
-            'Nur': { price: 15000, profitMargin: 4000 },
-            'Mehr': { price: 18000, profitMargin: 4000 },
-            'Hala': { price: 20000, profitMargin: 4000 }
-        };
+        let settingsData = [];
         let charts = {};
+        let orderItemCount = 0;
 
-        document.getElementById('date').valueAsDate = new Date();
+        document.getElementById('orderDate').valueAsDate = new Date();
         document.getElementById('expenseDate').valueAsDate = new Date();
-        loadSettings();
+        
+        // Add first order item by default
+        addOrderItem();
+        loadAllSettings();
 
-        async function loadSettings() {
+        async function loadAllSettings() {
             try {
-                const saved = await window.storage.get('profitSettings');
-                if (saved) {
-                    settingsData = JSON.parse(saved.value);
+                const response = await fetch(SCRIPT_URL + '?action=getSettings');
+                const data = await response.json();
+                if (data.status === 'success' && data.settings.length > 0) {
+                    settingsData = data.settings;
+                } else {
+                    // Default settings
+                    const today = new Date().toISOString().split('T')[0];
+                    settingsData = [
+                        { 'Dress Name': 'Nur', 'Price': 15000, 'Price Start Date': today, 'Price End Date': '', 'Profit Margin': 4000, 'Profit Start Date': today, 'Profit End Date': '' },
+                        { 'Dress Name': 'Mehr', 'Price': 18000, 'Price Start Date': today, 'Price End Date': '', 'Profit Margin': 4000, 'Profit Start Date': today, 'Profit End Date': '' },
+                        { 'Dress Name': 'Hala', 'Price': 20000, 'Price Start Date': today, 'Price End Date': '', 'Profit Margin': 4000, 'Profit Start Date': today, 'Profit End Date': '' }
+                    ];
                 }
             } catch (error) {
                 console.log('Using default settings');
             }
         }
 
-        function updatePrice() {
-            const dressName = document.getElementById('dressName').value;
-            const priceField = document.getElementById('price');
-            if (dressName && settingsData[dressName]) {
-                priceField.value = settingsData[dressName].price;
-                priceField.readOnly = true;
+        function getCurrentPrice(dressName, orderDate) {
+            const dress = settingsData.find(s => s['Dress Name'] === dressName);
+            if (!dress) return 0;
+            
+            const date = new Date(orderDate);
+            const startDate = new Date(dress['Price Start Date']);
+            const endDate = dress['Price End Date'] ? new Date(dress['Price End Date']) : null;
+            
+            if (date >= startDate && (!endDate || date <= endDate)) {
+                return parseFloat(dress['Price']) || 0;
+            }
+            return parseFloat(dress['Price']) || 0;
+        }
+
+        function getCurrentProfit(dressName, orderDate) {
+            const dress = settingsData.find(s => s['Dress Name'] === dressName);
+            if (!dress) return 4000;
+            
+            const date = new Date(orderDate);
+            const startDate = new Date(dress['Profit Start Date']);
+            const endDate = dress['Profit End Date'] ? new Date(dress['Profit End Date']) : null;
+            
+            if (date >= startDate && (!endDate || date <= endDate)) {
+                return parseFloat(dress['Profit Margin']) || 4000;
+            }
+            return parseFloat(dress['Profit Margin']) || 4000;
+        }
+
+        function addOrderItem() {
+            orderItemCount++;
+            const container = document.getElementById('orderItems');
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'order-item';
+            itemDiv.id = `item-${orderItemCount}`;
+            
+            itemDiv.innerHTML = `
+                <h4>
+                    Item ${orderItemCount}
+                    ${orderItemCount > 1 ? `<button type="button" class="remove-item-btn" onclick="removeOrderItem(${orderItemCount})">Remove</button>` : ''}
+                </h4>
+                <div class="form-group">
+                    <label>Dress Name</label>
+                    <select class="item-dress" required onchange="updateItemPrice(${orderItemCount})">
+                        <option value="">Select a dress</option>
+                        <option value="Nur">Nur</option>
+                        <option value="Mehr">Mehr</option>
+                        <option value="Hala">Hala</option>
+                    </select>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <label>Unit Price (PKR)</label>
+                        <input type="number" class="item-price" placeholder="Auto-filled" readonly required>
+                    </div>
+                    <div class="form-group">
+                        <label>Quantity</label>
+                        <input type="number" class="item-quantity" value="1" min="1" required>
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(itemDiv);
+        }
+
+        function removeOrderItem(id) {
+            const item = document.getElementById(`item-${id}`);
+            if (item) {
+                item.remove();
             }
         }
 
-        function enablePriceEdit() {
-            const priceField = document.getElementById('price');
-            priceField.readOnly = false;
-            priceField.focus();
-        }
-
-        function openProfitSettings() {
-            updateProfitSettingsTable();
-            document.getElementById('profitModal').classList.add('show');
-        }
-
-        function closeProfitSettings() {
-            document.getElementById('profitModal').classList.remove('show');
-        }
-
-        function updateProfitSettingsTable() {
-            const tbody = document.getElementById('profitSettingsTable');
-            tbody.innerHTML = '';
+        function updateItemPrice(id) {
+            const item = document.getElementById(`item-${id}`);
+            const dressSelect = item.querySelector('.item-dress');
+            const priceInput = item.querySelector('.item-price');
+            const orderDate = document.getElementById('orderDate').value;
             
-            Object.keys(settingsData).forEach(dress => {
-                const row = tbody.insertRow();
-                row.innerHTML = `
-                    <td>${dress}</td>
-                    <td><input type="number" value="${settingsData[dress].price}" data-dress="${dress}" data-field="price"></td>
-                    <td><input type="number" value="${settingsData[dress].profitMargin}" data-dress="${dress}" data-field="profit"></td>
-                `;
-            });
-        }
-
-        async function saveProfitSettings() {
-            const inputs = document.querySelectorAll('#profitSettingsTable input');
-            inputs.forEach(input => {
-                const dress = input.dataset.dress;
-                const field = input.dataset.field;
-                if (field === 'price') {
-                    settingsData[dress].price = parseFloat(input.value) || 0;
-                } else if (field === 'profit') {
-                    settingsData[dress].profitMargin = parseFloat(input.value) || 0;
-                }
-            });
-            
-            try {
-                await window.storage.set('profitSettings', JSON.stringify(settingsData));
-                showMessage('successMessage', 'Settings saved successfully!');
-                closeProfitSettings();
-                updateDashboard();
-            } catch (error) {
-                console.error('Error saving:', error);
+            if (dressSelect.value && orderDate) {
+                priceInput.value = getCurrentPrice(dressSelect.value, orderDate);
             }
         }
 
@@ -632,9 +841,13 @@
             if (view === 'order') {
                 document.getElementById('orderView').classList.add('active');
                 document.querySelector('.nav-btn:nth-child(1)').classList.add('active');
+            } else if (view === 'myorders') {
+                document.getElementById('myOrdersView').classList.add('active');
+                document.querySelector('.nav-btn:nth-child(2)').classList.add('active');
+                loadMyOrders();
             } else if (view === 'dashboard') {
                 document.getElementById('dashboardView').classList.add('active');
-                document.querySelector('.nav-btn:nth-child(2)').classList.add('active');
+                document.querySelector('.nav-btn:nth-child(3)').classList.add('active');
                 loadDashboard();
             }
         }
@@ -644,22 +857,45 @@
             
             const submitBtn = document.getElementById('submitBtn');
             const loading = document.getElementById('loading');
-            const advancePayment = parseFloat(document.getElementById('advancePayment').value);
-            const price = parseFloat(document.getElementById('price').value);
             
-            if (advancePayment > price) {
-                showMessage('errorMessage', 'Advance payment cannot exceed total price!');
+            // Collect all items
+            const items = [];
+            const itemElements = document.querySelectorAll('.order-item');
+            
+            itemElements.forEach(itemEl => {
+                const dress = itemEl.querySelector('.item-dress').value;
+                const price = parseFloat(itemEl.querySelector('.item-price').value);
+                const quantity = parseInt(itemEl.querySelector('.item-quantity').value);
+                
+                if (dress && price && quantity) {
+                    items.push({ dressName: dress, price: price, quantity: quantity, advancePayment: 0 });
+                }
+            });
+            
+            if (items.length === 0) {
+                showMessage('errorMessage', 'Please add at least one item!');
                 return;
             }
             
+            const advancePayment = parseFloat(document.getElementById('advancePayment').value) || 0;
+            const totalAmount = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            
+            if (advancePayment > totalAmount) {
+                showMessage('errorMessage', 'Advance payment cannot exceed total amount!');
+                return;
+            }
+            
+            // Distribute advance payment across items proportionally
+            items.forEach(item => {
+                const itemTotal = item.price * item.quantity;
+                item.advancePayment = (itemTotal / totalAmount) * advancePayment;
+            });
+            
             const formData = {
                 type: 'order',
-                date: document.getElementById('date').value,
-                dressName: document.getElementById('dressName').value,
+                date: document.getElementById('orderDate').value,
                 clientName: document.getElementById('clientName').value,
-                price: price,
-                advancePayment: advancePayment,
-                remainingAmount: price - advancePayment
+                items: items
             };
 
             submitBtn.disabled = true;
@@ -678,7 +914,12 @@
                 showMessage('successMessage', '✓ Order submitted successfully!');
                 
                 document.getElementById('orderForm').reset();
-                document.getElementById('date').valueAsDate = new Date();
+                document.getElementById('orderDate').valueAsDate = new Date();
+                
+                // Reset items
+                document.getElementById('orderItems').innerHTML = '<h3 style="margin-bottom: 15px; color: #333;">Order Items</h3>';
+                orderItemCount = 0;
+                addOrderItem();
                 
             } catch (error) {
                 console.error('Error:', error);
@@ -754,7 +995,6 @@
                 return;
             }
 
-            // Sort by date (newest first)
             const sortedExpenses = [...expensesData].sort((a, b) => new Date(b.Date) - new Date(a.Date));
 
             list.innerHTML = sortedExpenses.map(expense => `
@@ -806,15 +1046,22 @@
         function showOverview(orders, expenses) {
             let totalSales = 0;
             let totalProfit = 0;
-            let totalOrders = orders.length;
+            let totalOrders = 0;
             let totalExpenses = 0;
             
+            const uniqueOrders = new Set();
+            
             orders.forEach(order => {
-                const price = parseFloat(order.Price) || 0;
-                const profitMargin = settingsData[order['Dress Name']]?.profitMargin || 4000;
-                totalSales += price;
-                totalProfit += profitMargin;
+                const totalAmount = parseFloat(order['Total Amount']) || 0;
+                const quantity = parseInt(order['Quantity']) || 1;
+                const profitMargin = getCurrentProfit(order['Dress Name'], order['Date']);
+                
+                totalSales += totalAmount;
+                totalProfit += (profitMargin * quantity);
+                uniqueOrders.add(order['Date'] + order['Client Name']);
             });
+            
+            totalOrders = uniqueOrders.size;
             
             expenses.forEach(expense => {
                 totalExpenses += parseFloat(expense.Amount) || 0;
@@ -856,12 +1103,13 @@
                     dressSummary[dress] = { count: 0, sales: 0, profit: 0 };
                 }
                 
-                const price = parseFloat(order.Price) || 0;
-                const profitMargin = settingsData[dress]?.profitMargin || 4000;
+                const totalAmount = parseFloat(order['Total Amount']) || 0;
+                const quantity = parseInt(order['Quantity']) || 1;
+                const profitMargin = getCurrentProfit(dress, order['Date']);
                 
-                dressSummary[dress].count++;
-                dressSummary[dress].sales += price;
-                dressSummary[dress].profit += profitMargin;
+                dressSummary[dress].count += quantity;
+                dressSummary[dress].sales += totalAmount;
+                dressSummary[dress].profit += (profitMargin * quantity);
             });
             
             let statsHTML = '<div class="stats-grid">';
@@ -870,7 +1118,7 @@
                 statsHTML += `
                     <div class="stat-card">
                         <div class="stat-value">${dress}</div>
-                        <div class="stat-label">${data.count} orders</div>
+                        <div class="stat-label">${data.count} items sold</div>
                         <div class="stat-label">Sales: ₨${data.sales.toLocaleString()}</div>
                         <div class="stat-label">Profit: ₨${data.profit.toLocaleString()}</div>
                     </div>
@@ -893,7 +1141,6 @@
                 </div>
             `;
             
-            // Destroy existing charts to prevent memory leaks
             if (charts.salesChart) {
                 charts.salesChart.destroy();
                 charts.salesChart = null;
@@ -903,12 +1150,12 @@
                 charts.expenseChart = null;
             }
             
-            // Sales chart
             const dressCounts = {};
             orders.forEach(order => {
                 const dress = order['Dress Name'];
+                const quantity = parseInt(order['Quantity']) || 1;
                 if (dress) {
-                    dressCounts[dress] = (dressCounts[dress] || 0) + 1;
+                    dressCounts[dress] = (dressCounts[dress] || 0) + quantity;
                 }
             });
             
@@ -919,7 +1166,7 @@
                     data: {
                         labels: Object.keys(dressCounts),
                         datasets: [{
-                            label: 'Orders by Dress',
+                            label: 'Items Sold by Dress',
                             data: Object.values(dressCounts),
                             backgroundColor: ['#C4A574', '#8B7355', '#A0826D']
                         }]
@@ -929,7 +1176,7 @@
                         maintainAspectRatio: true,
                         plugins: { 
                             legend: { display: true },
-                            title: { display: true, text: 'Orders by Dress Type' }
+                            title: { display: true, text: 'Items Sold by Dress Type' }
                         },
                         scales: {
                             y: { beginAtZero: true, ticks: { stepSize: 1 } }
@@ -938,7 +1185,6 @@
                 });
             }
 
-            // Expense chart
             const ctx2 = document.getElementById('expenseChart');
             if (ctx2 && expenses.length > 0) {
                 const sortedExpenses = expenses.sort((a, b) => new Date(a.Date) - new Date(b.Date));
@@ -971,7 +1217,6 @@
                     }
                 });
             } else if (ctx2) {
-                // Show message if no expenses
                 ctx2.parentElement.innerHTML = '<p style="text-align: center; padding: 40px; color: #666;">No expenses to display</p>';
             }
         }
@@ -984,7 +1229,6 @@
                 </div>
             `;
             
-            // Destroy existing chart to prevent memory leaks
             if (charts.dressChart) {
                 charts.dressChart.destroy();
                 charts.dressChart = null;
@@ -1021,6 +1265,123 @@
             }
         }
 
+        function openProfitSettings() {
+            renderSettingsForm();
+            document.getElementById('profitModal').classList.add('show');
+        }
+
+        function closeProfitSettings() {
+            document.getElementById('profitModal').classList.remove('show');
+        }
+
+        function renderSettingsForm() {
+            const container = document.getElementById('settingsContainer');
+            let html = '';
+            
+            ['Nur', 'Mehr', 'Hala'].forEach(dressName => {
+                const existing = settingsData.find(s => s['Dress Name'] === dressName);
+                const today = new Date().toISOString().split('T')[0];
+                
+                const priceData = existing || { Price: 0, 'Price Start Date': today, 'Price End Date': '' };
+                const profitData = existing || { 'Profit Margin': 4000, 'Profit Start Date': today, 'Profit End Date': '' };
+                
+                html += `
+                    <div class="settings-row">
+                        <h4>${dressName}</h4>
+                        <div class="form-group">
+                            <label>Price (PKR)</label>
+                            <input type="number" class="dress-price" data-dress="${dressName}" value="${priceData.Price || 0}">
+                        </div>
+                        <div class="row">
+                            <div class="form-group">
+                                <label>Price Start Date</label>
+                                <input type="date" class="price-start" data-dress="${dressName}" value="${priceData['Price Start Date'] || today}">
+                            </div>
+                            <div class="form-group">
+                                <label>Price End Date</label>
+                                <input type="date" class="price-end" data-dress="${dressName}" value="${priceData['Price End Date'] || ''}">
+                                <div class="checkbox-group">
+                                    <input type="checkbox" class="price-no-end" data-dress="${dressName}" ${!priceData['Price End Date'] ? 'checked' : ''}>
+                                    <label style="margin: 0;">No end date</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Profit Margin (PKR)</label>
+                            <input type="number" class="dress-profit" data-dress="${dressName}" value="${profitData['Profit Margin'] || 4000}">
+                        </div>
+                        <div class="row">
+                            <div class="form-group">
+                                <label>Profit Start Date</label>
+                                <input type="date" class="profit-start" data-dress="${dressName}" value="${profitData['Profit Start Date'] || today}">
+                            </div>
+                            <div class="form-group">
+                                <label>Profit End Date</label>
+                                <input type="date" class="profit-end" data-dress="${dressName}" value="${profitData['Profit End Date'] || ''}">
+                                <div class="checkbox-group">
+                                    <input type="checkbox" class="profit-no-end" data-dress="${dressName}" ${!profitData['Profit End Date'] ? 'checked' : ''}>
+                                    <label style="margin: 0;">No end date</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+            
+            // Add event listeners for checkboxes
+            document.querySelectorAll('.price-no-end, .profit-no-end').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const dress = this.dataset.dress;
+                    const isPrice = this.classList.contains('price-no-end');
+                    const dateInput = document.querySelector(`.${isPrice ? 'price' : 'profit'}-end[data-dress="${dress}"]`);
+                    dateInput.disabled = this.checked;
+                    if (this.checked) dateInput.value = '';
+                });
+            });
+        }
+
+        async function saveProfitSettings() {
+            const settings = [];
+            
+            ['Nur', 'Mehr', 'Hala'].forEach(dressName => {
+                const price = document.querySelector(`.dress-price[data-dress="${dressName}"]`).value;
+                const priceStart = document.querySelector(`.price-start[data-dress="${dressName}"]`).value;
+                const priceEnd = document.querySelector(`.price-end[data-dress="${dressName}"]`).value;
+                const profit = document.querySelector(`.dress-profit[data-dress="${dressName}"]`).value;
+                const profitStart = document.querySelector(`.profit-start[data-dress="${dressName}"]`).value;
+                const profitEnd = document.querySelector(`.profit-end[data-dress="${dressName}"]`).value;
+                
+                settings.push({
+                    dressName: dressName,
+                    price: parseFloat(price) || 0,
+                    priceStartDate: priceStart,
+                    priceEndDate: priceEnd,
+                    profitMargin: parseFloat(profit) || 0,
+                    profitStartDate: profitStart,
+                    profitEndDate: profitEnd
+                });
+            });
+            
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: 'updateSettings', settings: settings })
+                });
+                
+                showMessage('successMessage', '✓ Settings saved successfully!');
+                closeProfitSettings();
+                await loadAllSettings();
+                updateDashboard();
+            } catch (error) {
+                console.error('Error saving:', error);
+                showMessage('errorMessage', '✗ Failed to save settings.');
+            }
+        }
+
         function showMessage(elementId, message) {
             const element = document.getElementById(elementId);
             element.textContent = message;
@@ -1031,6 +1392,128 @@
         function hideMessages() {
             document.getElementById('successMessage').classList.remove('show');
             document.getElementById('errorMessage').classList.remove('show');
+        }
+
+        // MY ORDERS FUNCTIONALITY
+        let allOrdersData = [];
+
+        async function loadMyOrders() {
+            document.getElementById('ordersLoading').style.display = 'block';
+            document.getElementById('noOrders').style.display = 'none';
+            
+            try {
+                const response = await fetch(SCRIPT_URL + '?action=getOrders');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    allOrdersData = data.orders;
+                    displayOrders(allOrdersData);
+                }
+            } catch (error) {
+                console.error('Error loading orders:', error);
+                document.getElementById('ordersLoading').innerHTML = '<p style="color: #f44336;">Failed to load orders</p>';
+            }
+        }
+
+        function displayOrders(orders) {
+            const tbody = document.getElementById('ordersTableBody');
+            document.getElementById('ordersLoading').style.display = 'none';
+            
+            if (orders.length === 0) {
+                document.getElementById('noOrders').style.display = 'block';
+                tbody.innerHTML = '';
+                return;
+            }
+            
+            document.getElementById('noOrders').style.display = 'none';
+            
+            // Sort by date (newest first)
+            const sortedOrders = [...orders].sort((a, b) => new Date(b.Date) - new Date(a.Date));
+            
+            tbody.innerHTML = sortedOrders.map(order => {
+                const orderId = order['Order ID'] || 'N/A';
+                const status = order['Status'] || 'Pending';
+                const statusClass = status.toLowerCase().replace(' ', '-');
+                
+                return `
+                    <tr data-order-id="${orderId}">
+                        <td><span class="order-id">${orderId}</span></td>
+                        <td>${order.Date || 'N/A'}</td>
+                        <td>${order['Client Name'] || 'N/A'}</td>
+                        <td>${order['Dress Name'] || 'N/A'}</td>
+                        <td>${order.Quantity || 1}</td>
+                        <td>₨${(parseFloat(order['Total Amount']) || 0).toLocaleString()}</td>
+                        <td>₨${(parseFloat(order['Advance Payment']) || 0).toLocaleString()}</td>
+                        <td>
+                            <input type="number" 
+                                   class="remaining-input" 
+                                   value="${parseFloat(order['Remaining Amount']) || 0}" 
+                                   data-order-id="${orderId}"
+                                   style="width: 100px;">
+                        </td>
+                        <td>
+                            <select class="status-select" data-order-id="${orderId}">
+                                <option value="Pending" ${status === 'Pending' ? 'selected' : ''}>Pending</option>
+                                <option value="Completed" ${status === 'Completed' ? 'selected' : ''}>Completed</option>
+                                <option value="Cancelled" ${status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+                            </select>
+                        </td>
+                        <td>
+                            <button class="save-order-btn" onclick="updateOrder('${orderId}')">Save</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function updateOrder(orderId) {
+            const row = document.querySelector(`tr[data-order-id="${orderId}"]`);
+            const status = row.querySelector('.status-select').value;
+            const remainingAmount = parseFloat(row.querySelector('.remaining-input').value) || 0;
+            
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        type: 'updateOrder',
+                        orderId: orderId,
+                        status: status,
+                        remainingAmount: remainingAmount
+                    })
+                });
+                
+                showMessage('successMessage', `✓ Order ${orderId} updated successfully!`);
+                
+                // Update local data
+                const orderIndex = allOrdersData.findIndex(o => o['Order ID'] === orderId);
+                if (orderIndex !== -1) {
+                    allOrdersData[orderIndex]['Status'] = status;
+                    allOrdersData[orderIndex]['Remaining Amount'] = remainingAmount;
+                }
+                
+            } catch (error) {
+                console.error('Error updating order:', error);
+                showMessage('errorMessage', '✗ Failed to update order');
+            }
+        }
+
+        function filterOrders() {
+            const searchText = document.getElementById('searchClient').value.toLowerCase();
+            const statusFilter = document.getElementById('filterStatus').value;
+            const dressFilter = document.getElementById('filterDress').value;
+            
+            const filtered = allOrdersData.filter(order => {
+                const matchesSearch = !searchText || 
+                    (order['Client Name'] || '').toLowerCase().includes(searchText);
+                const matchesStatus = !statusFilter || order['Status'] === statusFilter;
+                const matchesDress = !dressFilter || order['Dress Name'] === dressFilter;
+                
+                return matchesSearch && matchesStatus && matchesDress;
+            });
+            
+            displayOrders(filtered);
         }
     </script>
 </body>
