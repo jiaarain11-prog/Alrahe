@@ -477,19 +477,19 @@
             display: inline-block;
         }
 
-        .status-pending {
+        .status-production {
+            background: #cfe2ff;
+            color: #084298;
+        }
+
+        .status-stitching {
             background: #fff3cd;
             color: #856404;
         }
 
-        .status-completed {
+        .status-delivered {
             background: #d4edda;
             color: #155724;
-        }
-
-        .status-cancelled {
-            background: #f8d7da;
-            color: #721c24;
         }
 
         .save-order-btn {
@@ -606,9 +606,9 @@
                 <input type="text" id="searchClient" placeholder="Search by client name..." onkeyup="filterOrders()">
                 <select id="filterStatus" onchange="filterOrders()">
                     <option value="">All Status</option>
-                    <option value="Pending">Pending</option>
-                    <option value="Completed">Completed</option>
-                    <option value="Cancelled">Cancelled</option>
+                    <option value="Production">Production</option>
+                    <option value="Stitching">Stitching</option>
+                    <option value="Delivered">Delivered</option>
                 </select>
                 <select id="filterDress" onchange="filterOrders()">
                     <option value="">All Dresses</option>
@@ -1052,13 +1052,20 @@
             const uniqueOrders = new Set();
             
             orders.forEach(order => {
+                // Use Total Amount column (which is Unit Price * Quantity)
                 const totalAmount = parseFloat(order['Total Amount']) || 0;
                 const quantity = parseInt(order['Quantity']) || 1;
                 const profitMargin = getCurrentProfit(order['Dress Name'], order['Date']);
                 
+                // Add to total sales
                 totalSales += totalAmount;
+                
+                // Add to profit (profit per item * quantity)
                 totalProfit += (profitMargin * quantity);
-                uniqueOrders.add(order['Date'] + order['Client Name']);
+                
+                // Count unique orders by Order ID or Date+Client combination
+                const orderId = order['Order ID'] || (order['Date'] + order['Client Name']);
+                uniqueOrders.add(orderId);
             });
             
             totalOrders = uniqueOrders.size;
@@ -1077,15 +1084,15 @@
                         <div class="stat-label">Total Orders</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-value">₨${totalSales.toLocaleString()}</div>
+                        <div class="stat-value">₨${Math.round(totalSales).toLocaleString()}</div>
                         <div class="stat-label">Total Sales</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-value">₨${totalExpenses.toLocaleString()}</div>
+                        <div class="stat-value">₨${Math.round(totalExpenses).toLocaleString()}</div>
                         <div class="stat-label">Total Expenses</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-value">₨${netProfit.toLocaleString()}</div>
+                        <div class="stat-value">₨${Math.round(netProfit).toLocaleString()}</div>
                         <div class="stat-label">Net Profit</div>
                     </div>
                 </div>
@@ -1103,6 +1110,7 @@
                     dressSummary[dress] = { count: 0, sales: 0, profit: 0 };
                 }
                 
+                // Use Total Amount from Excel (already calculated as Unit Price * Quantity)
                 const totalAmount = parseFloat(order['Total Amount']) || 0;
                 const quantity = parseInt(order['Quantity']) || 1;
                 const profitMargin = getCurrentProfit(dress, order['Date']);
@@ -1119,8 +1127,8 @@
                     <div class="stat-card">
                         <div class="stat-value">${dress}</div>
                         <div class="stat-label">${data.count} items sold</div>
-                        <div class="stat-label">Sales: ₨${data.sales.toLocaleString()}</div>
-                        <div class="stat-label">Profit: ₨${data.profit.toLocaleString()}</div>
+                        <div class="stat-label">Sales: ₨${Math.round(data.sales).toLocaleString()}</div>
+                        <div class="stat-label">Profit: ₨${Math.round(data.profit).toLocaleString()}</div>
                     </div>
                 `;
             });
@@ -1453,9 +1461,9 @@
                         </td>
                         <td>
                             <select class="status-select" data-order-id="${orderId}">
-                                <option value="Pending" ${status === 'Pending' ? 'selected' : ''}>Pending</option>
-                                <option value="Completed" ${status === 'Completed' ? 'selected' : ''}>Completed</option>
-                                <option value="Cancelled" ${status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+                                <option value="Production" ${status === 'Production' ? 'selected' : ''}>Production</option>
+                                <option value="Stitching" ${status === 'Stitching' ? 'selected' : ''}>Stitching</option>
+                                <option value="Delivered" ${status === 'Delivered' ? 'selected' : ''}>Delivered</option>
                             </select>
                         </td>
                         <td>
