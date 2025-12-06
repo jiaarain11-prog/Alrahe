@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<link rel="apple-touch-icon" href="1C07F9B4-3595-44BF-AC60-FCCD1649F4CE.jpeg">
-
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alrahe Label - Order Entry</title>
+    <title>Alrahe Label - Order Management</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -16,21 +15,41 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #F4ECD8 0%, #E8DCC4 100%);
             min-height: 100vh;
             padding: 20px;
+        }
+
+        .nav {
             display: flex;
-            align-items: center;
-            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            padding: 12px 24px;
+            background: white;
+            border: 2px solid #C4A574;
+            border-radius: 10px;
+            color: #C4A574;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .nav-btn.active {
+            background: linear-gradient(135deg, #C4A574 0%, #8B7355 100%);
+            color: white;
         }
 
         .container {
             background: white;
             border-radius: 20px;
             padding: 30px;
-            max-width: 500px;
-            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
             box-shadow: 0 20px 60px rgba(0,0,0,0.15);
         }
 
@@ -53,6 +72,14 @@
             font-size: 14px;
         }
 
+        .view {
+            display: none;
+        }
+
+        .view.active {
+            display: block;
+        }
+
         .form-group {
             margin-bottom: 20px;
         }
@@ -73,12 +100,36 @@
             font-size: 16px;
             transition: all 0.3s ease;
             font-family: inherit;
+            -webkit-appearance: none;
+            appearance: none;
         }
 
         input:focus, select:focus {
             outline: none;
             border-color: #C4A574;
             box-shadow: 0 0 0 3px rgba(196, 165, 116, 0.1);
+        }
+
+        .price-group {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .price-group .form-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        .price-group button {
+            padding: 12px 20px;
+            background: #C4A574;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            white-space: nowrap;
+            font-weight: 600;
         }
 
         .btn {
@@ -91,17 +142,12 @@
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            transition: transform 0.2s ease;
             margin-top: 10px;
         }
 
         .btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(196, 165, 116, 0.3);
-        }
-
-        .btn:active {
-            transform: translateY(0);
         }
 
         .btn:disabled {
@@ -109,10 +155,14 @@
             cursor: not-allowed;
         }
 
-        .success-message {
+        .btn-secondary {
+            background: white;
+            color: #C4A574;
+            border: 2px solid #C4A574;
+        }
+
+        .success-message, .error-message {
             display: none;
-            background: #4caf50;
-            color: white;
             padding: 15px;
             border-radius: 10px;
             text-align: center;
@@ -120,30 +170,18 @@
             animation: slideIn 0.3s ease;
         }
 
+        .success-message {
+            background: #4caf50;
+            color: white;
+        }
+
         .error-message {
-            display: none;
             background: #f44336;
             color: white;
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            margin-top: 20px;
-            animation: slideIn 0.3s ease;
         }
 
         .success-message.show, .error-message.show {
             display: block;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
         }
 
         .loading {
@@ -157,134 +195,843 @@
             display: block;
         }
 
-        .setup-notice {
-            background: #fff3cd;
-            border: 2px solid #ffc107;
-            border-radius: 10px;
-            padding: 15px;
+        .dashboard-controls {
+            display: flex;
+            gap: 10px;
             margin-bottom: 20px;
-            font-size: 14px;
-            color: #856404;
+            flex-wrap: wrap;
         }
 
-        .setup-notice strong {
-            display: block;
+        .dashboard-controls select, .dashboard-controls button {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #F4ECD8 0%, #E8DCC4 100%);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #C4A574;
             margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 13px;
+        }
+
+        .chart-container {
+            margin-bottom: 30px;
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 15px;
+        }
+
+        .expense-section {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .expense-section h3 {
+            margin-bottom: 15px;
+            color: #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .add-expense-btn {
+            width: 40px;
+            height: 40px;
+            background: #C4A574;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .expense-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .expense-item {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .expense-info {
+            flex: 1;
+        }
+
+        .expense-date {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .expense-description {
+            font-weight: 600;
+            margin: 5px 0;
+        }
+
+        .expense-amount {
+            color: #C4A574;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            color: #333;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .profit-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .profit-table th, .profit-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .profit-table th {
+            background: #F4ECD8;
+            font-weight: 600;
+        }
+
+        .profit-table input {
+            width: 100%;
+            padding: 8px;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .dashboard-controls {
+                flex-direction: column;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .price-group {
+                flex-direction: column;
+            }
+
+            .price-group button {
+                width: 100%;
+            }
         }
     </style>
 </head>
 <body>
+    <div class="nav">
+        <button class="nav-btn active" onclick="switchView('order')">New Order</button>
+        <button class="nav-btn" onclick="switchView('dashboard')">Dashboard</button>
+    </div>
+
     <div class="container">
         <div class="header">
             <div class="brand-name">Alrahe Label</div>
-            <div class="subtitle">Order Entry System</div>
+            <div class="subtitle">Order Management System</div>
         </div>
 
+        <!-- ORDER ENTRY VIEW -->
+        <div id="orderView" class="view active">
+            <form id="orderForm">
+                <div class="form-group">
+                    <label for="date">Date</label>
+                    <input type="date" id="date" required>
+                </div>
 
+                <div class="form-group">
+                    <label for="dressName">Dress Name</label>
+                    <select id="dressName" required onchange="updatePrice()">
+                        <option value="">Select a dress</option>
+                        <option value="Nur">Nur</option>
+                        <option value="Mehr">Mehr</option>
+                        <option value="Hala">Hala</option>
+                    </select>
+                </div>
 
-        <form id="orderForm">
-            <div class="form-group">
-                <label for="date">Date</label>
-                <input type="date" id="date" required>
-            </div>
+                <div class="form-group">
+                    <label for="clientName">Client Name</label>
+                    <input type="text" id="clientName" placeholder="Enter client name" required>
+                </div>
 
-            <div class="form-group">
-                <label for="dressName">Dress Name</label>
-                <select id="dressName" required>
-                    <option value="">Select a dress</option>
-                    <option value="Nur">Nur</option>
-                    <option value="Mehr">Mehr</option>
-                    <option value="Hala">Hala</option>
+                <div class="price-group">
+                    <div class="form-group">
+                        <label for="price">Price (PKR)</label>
+                        <input type="number" id="price" placeholder="Auto-filled" readonly>
+                    </div>
+                    <button type="button" onclick="enablePriceEdit()">Edit Price</button>
+                </div>
+
+                <div class="form-group">
+                    <label for="advancePayment">Advance Payment (PKR)</label>
+                    <input type="number" id="advancePayment" placeholder="Enter advance amount" required min="0">
+                </div>
+
+                <button type="submit" class="btn" id="submitBtn">Submit Order</button>
+            </form>
+
+            <div class="loading" id="loading">Submitting order...</div>
+            <div class="success-message" id="successMessage">✓ Order submitted successfully!</div>
+            <div class="error-message" id="errorMessage">✗ Failed to submit. Please check your input.</div>
+        </div>
+
+        <!-- DASHBOARD VIEW -->
+        <div id="dashboardView" class="view">
+            <div class="dashboard-controls">
+                <select id="timeFilter" onchange="updateDashboard()">
+                    <option value="all">All Time</option>
+                    <option value="month">This Month</option>
+                    <option value="4months">Last 4 Months</option>
+                    <option value="year">This Year</option>
                 </select>
+                <select id="viewType" onchange="updateDashboard()">
+                    <option value="overview">Overview</option>
+                    <option value="byDress">By Dress</option>
+                </select>
+                <button class="btn" onclick="loadDashboard()">Refresh</button>
+                <button class="btn btn-secondary" onclick="openProfitSettings()">⚙️ Profit Settings</button>
             </div>
 
-            <div class="form-group">
-                <label for="clientName">Client Name</label>
-                <input type="text" id="clientName" placeholder="Enter client name" required>
+            <div id="statsContainer"></div>
+            <div id="chartsContainer"></div>
+
+            <div class="expense-section">
+                <h3>
+                    Other Expenses
+                    <button class="add-expense-btn" onclick="openExpenseModal()">+</button>
+                </h3>
+                <div class="expense-list" id="expenseList"></div>
             </div>
-
-            <div class="form-group">
-                <label for="price">Price (PKR)</label>
-                <input type="number" id="price" placeholder="0" required>
-            </div>
-
-            <button type="submit" class="btn" id="submitBtn">Submit Order</button>
-        </form>
-
-        <div class="loading" id="loading">Submitting order...</div>
-        <div class="success-message" id="successMessage">
-            ✓ Order submitted successfully!
         </div>
-        <div class="error-message" id="errorMessage">
-            ✗ Failed to submit. Please try again.
+    </div>
+
+    <!-- Expense Modal -->
+    <div class="modal" id="expenseModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Expense</h2>
+                <button class="close-btn" onclick="closeExpenseModal()">&times;</button>
+            </div>
+            <form id="expenseForm">
+                <div class="form-group">
+                    <label for="expenseDate">Date</label>
+                    <input type="date" id="expenseDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="expenseDescription">Description</label>
+                    <input type="text" id="expenseDescription" placeholder="e.g., Marketing, Influencer payment" required>
+                </div>
+                <div class="form-group">
+                    <label for="expenseAmount">Amount (PKR)</label>
+                    <input type="number" id="expenseAmount" placeholder="0" required min="0">
+                </div>
+                <button type="submit" class="btn">Add Expense</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Profit Settings Modal -->
+    <div class="modal" id="profitModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Profit Margin Settings</h2>
+                <button class="close-btn" onclick="closeProfitSettings()">&times;</button>
+            </div>
+            <table class="profit-table">
+                <thead>
+                    <tr>
+                        <th>Dress Name</th>
+                        <th>Price (PKR)</th>
+                        <th>Profit Margin (PKR)</th>
+                    </tr>
+                </thead>
+                <tbody id="profitSettingsTable"></tbody>
+            </table>
+            <button class="btn" onclick="saveProfitSettings()">Save Settings</button>
         </div>
     </div>
 
     <script>
-        // Google Apps Script URL - Connected to your Google Sheet
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzNmmFgfL-GLSjCjSQEP74sRHlIRinjT4QqiZ9hwtH_dycc8UwSA0bJ4qxHg26qdw1FDg/exec';
+        
+        let ordersData = [];
+        let expensesData = [];
+        let settingsData = {
+            'Nur': { price: 15000, profitMargin: 4000 },
+            'Mehr': { price: 18000, profitMargin: 4000 },
+            'Hala': { price: 20000, profitMargin: 4000 }
+        };
+        let charts = {};
 
-        // Set today's date as default
         document.getElementById('date').valueAsDate = new Date();
+        document.getElementById('expenseDate').valueAsDate = new Date();
+        loadSettings();
+
+        async function loadSettings() {
+            try {
+                const saved = await window.storage.get('profitSettings');
+                if (saved) {
+                    settingsData = JSON.parse(saved.value);
+                }
+            } catch (error) {
+                console.log('Using default settings');
+            }
+        }
+
+        function updatePrice() {
+            const dressName = document.getElementById('dressName').value;
+            const priceField = document.getElementById('price');
+            if (dressName && settingsData[dressName]) {
+                priceField.value = settingsData[dressName].price;
+                priceField.readOnly = true;
+            }
+        }
+
+        function enablePriceEdit() {
+            const priceField = document.getElementById('price');
+            priceField.readOnly = false;
+            priceField.focus();
+        }
+
+        function openProfitSettings() {
+            updateProfitSettingsTable();
+            document.getElementById('profitModal').classList.add('show');
+        }
+
+        function closeProfitSettings() {
+            document.getElementById('profitModal').classList.remove('show');
+        }
+
+        function updateProfitSettingsTable() {
+            const tbody = document.getElementById('profitSettingsTable');
+            tbody.innerHTML = '';
+            
+            Object.keys(settingsData).forEach(dress => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${dress}</td>
+                    <td><input type="number" value="${settingsData[dress].price}" data-dress="${dress}" data-field="price"></td>
+                    <td><input type="number" value="${settingsData[dress].profitMargin}" data-dress="${dress}" data-field="profit"></td>
+                `;
+            });
+        }
+
+        async function saveProfitSettings() {
+            const inputs = document.querySelectorAll('#profitSettingsTable input');
+            inputs.forEach(input => {
+                const dress = input.dataset.dress;
+                const field = input.dataset.field;
+                if (field === 'price') {
+                    settingsData[dress].price = parseFloat(input.value) || 0;
+                } else if (field === 'profit') {
+                    settingsData[dress].profitMargin = parseFloat(input.value) || 0;
+                }
+            });
+            
+            try {
+                await window.storage.set('profitSettings', JSON.stringify(settingsData));
+                showMessage('successMessage', 'Settings saved successfully!');
+                closeProfitSettings();
+                updateDashboard();
+            } catch (error) {
+                console.error('Error saving:', error);
+            }
+        }
+
+        function switchView(view) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            
+            if (view === 'order') {
+                document.getElementById('orderView').classList.add('active');
+                document.querySelector('.nav-btn:nth-child(1)').classList.add('active');
+            } else if (view === 'dashboard') {
+                document.getElementById('dashboardView').classList.add('active');
+                document.querySelector('.nav-btn:nth-child(2)').classList.add('active');
+                loadDashboard();
+            }
+        }
 
         document.getElementById('orderForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const submitBtn = document.getElementById('submitBtn');
             const loading = document.getElementById('loading');
-            const successMsg = document.getElementById('successMessage');
-            const errorMsg = document.getElementById('errorMessage');
+            const advancePayment = parseFloat(document.getElementById('advancePayment').value);
+            const price = parseFloat(document.getElementById('price').value);
             
-            // Get form data
+            if (advancePayment > price) {
+                showMessage('errorMessage', 'Advance payment cannot exceed total price!');
+                return;
+            }
+            
             const formData = {
+                type: 'order',
                 date: document.getElementById('date').value,
                 dressName: document.getElementById('dressName').value,
                 clientName: document.getElementById('clientName').value,
-                price: document.getElementById('price').value
+                price: price,
+                advancePayment: advancePayment,
+                remainingAmount: price - advancePayment
             };
 
-            // Disable button and show loading
             submitBtn.disabled = true;
             loading.classList.add('show');
-            successMsg.classList.remove('show');
-            errorMsg.classList.remove('show');
+            hideMessages();
             
             try {
-                // Send to Google Sheets
-                const response = await fetch(SCRIPT_URL, {
+                await fetch(SCRIPT_URL, {
                     method: 'POST',
                     mode: 'no-cors',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(formData)
                 });
 
-                // Show success (no-cors mode doesn't return response, so we assume success)
                 loading.classList.remove('show');
-                successMsg.classList.add('show');
+                showMessage('successMessage', '✓ Order submitted successfully!');
                 
-                // Reset form
                 document.getElementById('orderForm').reset();
                 document.getElementById('date').valueAsDate = new Date();
-                
-                // Hide success message after 3 seconds
-                setTimeout(() => {
-                    successMsg.classList.remove('show');
-                }, 3000);
                 
             } catch (error) {
                 console.error('Error:', error);
                 loading.classList.remove('show');
-                errorMsg.classList.add('show');
-                
-                setTimeout(() => {
-                    errorMsg.classList.remove('show');
-                }, 3000);
+                showMessage('errorMessage', '✗ Failed to submit. Please try again.');
             } finally {
                 submitBtn.disabled = false;
             }
         });
+
+        function openExpenseModal() {
+            document.getElementById('expenseModal').classList.add('show');
+        }
+
+        function closeExpenseModal() {
+            document.getElementById('expenseModal').classList.remove('show');
+        }
+
+        document.getElementById('expenseForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const expenseData = {
+                type: 'expense',
+                date: document.getElementById('expenseDate').value,
+                description: document.getElementById('expenseDescription').value,
+                amount: parseFloat(document.getElementById('expenseAmount').value)
+            };
+            
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(expenseData)
+                });
+                
+                showMessage('successMessage', '✓ Expense added successfully!');
+                document.getElementById('expenseForm').reset();
+                document.getElementById('expenseDate').valueAsDate = new Date();
+                closeExpenseModal();
+                loadDashboard();
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('errorMessage', '✗ Failed to add expense.');
+            }
+        });
+
+        async function loadDashboard() {
+            try {
+                const ordersResponse = await fetch(SCRIPT_URL + '?action=getOrders');
+                const ordersResult = await ordersResponse.json();
+                if (ordersResult.status === 'success') {
+                    ordersData = ordersResult.orders;
+                }
+
+                const expensesResponse = await fetch(SCRIPT_URL + '?action=getExpenses');
+                const expensesResult = await expensesResponse.json();
+                if (expensesResult.status === 'success') {
+                    expensesData = expensesResult.expenses;
+                }
+
+                updateExpenseList();
+                updateDashboard();
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+            }
+        }
+
+        function updateExpenseList() {
+            const list = document.getElementById('expenseList');
+            if (expensesData.length === 0) {
+                list.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">No expenses recorded yet</p>';
+                return;
+            }
+
+            // Sort by date (newest first)
+            const sortedExpenses = [...expensesData].sort((a, b) => new Date(b.Date) - new Date(a.Date));
+
+            list.innerHTML = sortedExpenses.map(expense => `
+                <div class="expense-item">
+                    <div class="expense-info">
+                        <div class="expense-date">${expense.Date || 'N/A'}</div>
+                        <div class="expense-description">${expense.Description || 'No description'}</div>
+                    </div>
+                    <div class="expense-amount">₨${(parseFloat(expense.Amount) || 0).toLocaleString()}</div>
+                </div>
+            `).join('');
+        }
+
+        function updateDashboard() {
+            const timeFilter = document.getElementById('timeFilter').value;
+            const viewType = document.getElementById('viewType').value;
+            
+            const filteredOrders = filterOrdersByTime(ordersData, timeFilter);
+            const filteredExpenses = filterOrdersByTime(expensesData, timeFilter);
+            
+            if (viewType === 'overview') {
+                showOverview(filteredOrders, filteredExpenses);
+            } else {
+                showByDress(filteredOrders);
+            }
+        }
+
+        function filterOrdersByTime(items, filter) {
+            if (filter === 'all' || !items.length) return items;
+            
+            const now = new Date();
+            return items.filter(item => {
+                const itemDate = new Date(item.Date);
+                
+                if (filter === 'month') {
+                    return itemDate.getMonth() === now.getMonth() && 
+                           itemDate.getFullYear() === now.getFullYear();
+                } else if (filter === '4months') {
+                    const fourMonthsAgo = new Date();
+                    fourMonthsAgo.setMonth(now.getMonth() - 4);
+                    return itemDate >= fourMonthsAgo;
+                } else if (filter === 'year') {
+                    return itemDate.getFullYear() === now.getFullYear();
+                }
+                return true;
+            });
+        }
+
+        function showOverview(orders, expenses) {
+            let totalSales = 0;
+            let totalProfit = 0;
+            let totalOrders = orders.length;
+            let totalExpenses = 0;
+            
+            orders.forEach(order => {
+                const price = parseFloat(order.Price) || 0;
+                const profitMargin = settingsData[order['Dress Name']]?.profitMargin || 4000;
+                totalSales += price;
+                totalProfit += profitMargin;
+            });
+            
+            expenses.forEach(expense => {
+                totalExpenses += parseFloat(expense.Amount) || 0;
+            });
+            
+            const netProfit = totalProfit - totalExpenses;
+            
+            const statsContainer = document.getElementById('statsContainer');
+            statsContainer.innerHTML = `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">${totalOrders}</div>
+                        <div class="stat-label">Total Orders</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">₨${totalSales.toLocaleString()}</div>
+                        <div class="stat-label">Total Sales</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">₨${totalExpenses.toLocaleString()}</div>
+                        <div class="stat-label">Total Expenses</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">₨${netProfit.toLocaleString()}</div>
+                        <div class="stat-label">Net Profit</div>
+                    </div>
+                </div>
+            `;
+            
+            renderOverviewCharts(orders, expenses);
+        }
+
+        function showByDress(orders) {
+            const dressSummary = {};
+            
+            orders.forEach(order => {
+                const dress = order['Dress Name'];
+                if (!dressSummary[dress]) {
+                    dressSummary[dress] = { count: 0, sales: 0, profit: 0 };
+                }
+                
+                const price = parseFloat(order.Price) || 0;
+                const profitMargin = settingsData[dress]?.profitMargin || 4000;
+                
+                dressSummary[dress].count++;
+                dressSummary[dress].sales += price;
+                dressSummary[dress].profit += profitMargin;
+            });
+            
+            let statsHTML = '<div class="stats-grid">';
+            Object.keys(dressSummary).forEach(dress => {
+                const data = dressSummary[dress];
+                statsHTML += `
+                    <div class="stat-card">
+                        <div class="stat-value">${dress}</div>
+                        <div class="stat-label">${data.count} orders</div>
+                        <div class="stat-label">Sales: ₨${data.sales.toLocaleString()}</div>
+                        <div class="stat-label">Profit: ₨${data.profit.toLocaleString()}</div>
+                    </div>
+                `;
+            });
+            statsHTML += '</div>';
+            
+            document.getElementById('statsContainer').innerHTML = statsHTML;
+            renderDressCharts(dressSummary);
+        }
+
+        function renderOverviewCharts(orders, expenses) {
+            const chartsContainer = document.getElementById('chartsContainer');
+            chartsContainer.innerHTML = `
+                <div class="chart-container">
+                    <canvas id="salesChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <canvas id="expenseChart"></canvas>
+                </div>
+            `;
+            
+            // Destroy existing charts to prevent memory leaks
+            if (charts.salesChart) {
+                charts.salesChart.destroy();
+                charts.salesChart = null;
+            }
+            if (charts.expenseChart) {
+                charts.expenseChart.destroy();
+                charts.expenseChart = null;
+            }
+            
+            // Sales chart
+            const dressCounts = {};
+            orders.forEach(order => {
+                const dress = order['Dress Name'];
+                if (dress) {
+                    dressCounts[dress] = (dressCounts[dress] || 0) + 1;
+                }
+            });
+            
+            const ctx1 = document.getElementById('salesChart');
+            if (ctx1 && Object.keys(dressCounts).length > 0) {
+                charts.salesChart = new Chart(ctx1, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(dressCounts),
+                        datasets: [{
+                            label: 'Orders by Dress',
+                            data: Object.values(dressCounts),
+                            backgroundColor: ['#C4A574', '#8B7355', '#A0826D']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: { 
+                            legend: { display: true },
+                            title: { display: true, text: 'Orders by Dress Type' }
+                        },
+                        scales: {
+                            y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                        }
+                    }
+                });
+            }
+
+            // Expense chart
+            const ctx2 = document.getElementById('expenseChart');
+            if (ctx2 && expenses.length > 0) {
+                const sortedExpenses = expenses.sort((a, b) => new Date(a.Date) - new Date(b.Date));
+                
+                charts.expenseChart = new Chart(ctx2, {
+                    type: 'line',
+                    data: {
+                        labels: sortedExpenses.map(e => e.Date || 'N/A'),
+                        datasets: [{
+                            label: 'Expenses (PKR)',
+                            data: sortedExpenses.map(e => parseFloat(e.Amount) || 0),
+                            borderColor: '#C4A574',
+                            backgroundColor: 'rgba(196, 165, 116, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: { 
+                            legend: { display: true },
+                            title: { display: true, text: 'Expenses Over Time' }
+                        },
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+            } else if (ctx2) {
+                // Show message if no expenses
+                ctx2.parentElement.innerHTML = '<p style="text-align: center; padding: 40px; color: #666;">No expenses to display</p>';
+            }
+        }
+
+        function renderDressCharts(dressSummary) {
+            const chartsContainer = document.getElementById('chartsContainer');
+            chartsContainer.innerHTML = `
+                <div class="chart-container">
+                    <canvas id="dressChart"></canvas>
+                </div>
+            `;
+            
+            // Destroy existing chart to prevent memory leaks
+            if (charts.dressChart) {
+                charts.dressChart.destroy();
+                charts.dressChart = null;
+            }
+            
+            const ctx = document.getElementById('dressChart');
+            if (ctx && Object.keys(dressSummary).length > 0) {
+                charts.dressChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(dressSummary),
+                        datasets: [{
+                            label: 'Sales (PKR)',
+                            data: Object.keys(dressSummary).map(d => dressSummary[d].sales),
+                            backgroundColor: '#C4A574'
+                        }, {
+                            label: 'Profit (PKR)',
+                            data: Object.keys(dressSummary).map(d => dressSummary[d].profit),
+                            backgroundColor: '#8B7355'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: { 
+                            legend: { display: true },
+                            title: { display: true, text: 'Sales & Profit by Dress' }
+                        },
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+            }
+        }
+
+        function showMessage(elementId, message) {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.classList.add('show');
+            setTimeout(() => element.classList.remove('show'), 3000);
+        }
+
+        function hideMessages() {
+            document.getElementById('successMessage').classList.remove('show');
+            document.getElementById('errorMessage').classList.remove('show');
+        }
     </script>
 </body>
 </html>
