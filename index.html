@@ -188,13 +188,20 @@
             border: 2px solid #C4A574;
         }
 
-        .success-message, .error-message {
+        .success-message, .error-message, .info-message {
             display: none;
             padding: 15px;
             border-radius: 10px;
             text-align: center;
             margin-top: 20px;
             animation: slideIn 0.3s ease;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 2000;
+            min-width: 300px;
+            max-width: 400px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
 
         .success-message {
@@ -207,7 +214,12 @@
             color: white;
         }
 
-        .success-message.show, .error-message.show {
+        .info-message {
+            background: #2196F3;
+            color: white;
+        }
+
+        .success-message.show, .error-message.show, .info-message.show {
             display: block;
         }
 
@@ -598,6 +610,7 @@
             <div class="loading" id="loading">Submitting order...</div>
             <div class="success-message" id="successMessage">✓ Order submitted successfully!</div>
             <div class="error-message" id="errorMessage">✗ Failed to submit. Please check your input.</div>
+            <div class="info-message" id="infoMessage">ℹ Processing...</div>
         </div>
 
         <!-- MY ORDERS VIEW -->
@@ -814,12 +827,14 @@
             `;
             
             container.appendChild(itemDiv);
+            showInfoMessage('➕ New item added - Select a dress');
         }
 
         function removeOrderItem(id) {
             const item = document.getElementById(`item-${id}`);
             if (item) {
                 item.remove();
+                showInfoMessage('🗑️ Item removed');
             }
         }
 
@@ -830,7 +845,9 @@
             const orderDate = document.getElementById('orderDate').value;
             
             if (dressSelect.value && orderDate) {
-                priceInput.value = getCurrentPrice(dressSelect.value, orderDate);
+                const price = getCurrentPrice(dressSelect.value, orderDate);
+                priceInput.value = price;
+                showInfoMessage(`💰 Price updated: ₨${price.toLocaleString()} for ${dressSelect.value}`);
             }
         }
 
@@ -841,13 +858,16 @@
             if (view === 'order') {
                 document.getElementById('orderView').classList.add('active');
                 document.querySelector('.nav-btn:nth-child(1)').classList.add('active');
+                showInfoMessage('📝 New Order Page');
             } else if (view === 'myorders') {
                 document.getElementById('myOrdersView').classList.add('active');
                 document.querySelector('.nav-btn:nth-child(2)').classList.add('active');
+                showInfoMessage('📋 Loading your orders...');
                 loadMyOrders();
             } else if (view === 'dashboard') {
                 document.getElementById('dashboardView').classList.add('active');
                 document.querySelector('.nav-btn:nth-child(3)').classList.add('active');
+                showInfoMessage('📊 Loading dashboard...');
                 loadDashboard();
             }
         }
@@ -873,7 +893,7 @@
             });
             
             if (items.length === 0) {
-                showMessage('errorMessage', 'Please add at least one item!');
+                showErrorMessage('❌ Please add at least one item!');
                 return;
             }
             
@@ -881,7 +901,7 @@
             const totalAmount = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
             
             if (advancePayment > totalAmount) {
-                showMessage('errorMessage', 'Advance payment cannot exceed total amount!');
+                showErrorMessage('❌ Advance payment cannot exceed total amount!');
                 return;
             }
             
@@ -891,10 +911,12 @@
                 item.advancePayment = (itemTotal / totalAmount) * advancePayment;
             });
             
+            const clientName = document.getElementById('clientName').value;
+            
             const formData = {
                 type: 'order',
                 date: document.getElementById('orderDate').value,
-                clientName: document.getElementById('clientName').value,
+                clientName: clientName,
                 items: items
             };
 
@@ -911,7 +933,7 @@
                 });
 
                 loading.classList.remove('show');
-                showMessage('successMessage', '✓ Order submitted successfully!');
+                showSuccessMessage(`✓ Order for ${clientName} submitted successfully! ${items.length} item(s) added.`);
                 
                 document.getElementById('orderForm').reset();
                 document.getElementById('orderDate').valueAsDate = new Date();
@@ -924,7 +946,7 @@
             } catch (error) {
                 console.error('Error:', error);
                 loading.classList.remove('show');
-                showMessage('errorMessage', '✗ Failed to submit. Please try again.');
+                showErrorMessage('✗ Failed to submit order. Please try again.');
             } finally {
                 submitBtn.disabled = false;
             }
@@ -932,20 +954,25 @@
 
         function openExpenseModal() {
             document.getElementById('expenseModal').classList.add('show');
+            showInfoMessage('💵 Add a new expense');
         }
 
         function closeExpenseModal() {
             document.getElementById('expenseModal').classList.remove('show');
+            showInfoMessage('❌ Expense form closed');
         }
 
         document.getElementById('expenseForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
+            const description = document.getElementById('expenseDescription').value;
+            const amount = parseFloat(document.getElementById('expenseAmount').value);
+            
             const expenseData = {
                 type: 'expense',
                 date: document.getElementById('expenseDate').value,
-                description: document.getElementById('expenseDescription').value,
-                amount: parseFloat(document.getElementById('expenseAmount').value)
+                description: description,
+                amount: amount
             };
             
             try {
@@ -956,19 +983,21 @@
                     body: JSON.stringify(expenseData)
                 });
                 
-                showMessage('successMessage', '✓ Expense added successfully!');
+                showSuccessMessage(`✓ Expense added: ${description} - ₨${amount.toLocaleString()}`);
                 document.getElementById('expenseForm').reset();
                 document.getElementById('expenseDate').valueAsDate = new Date();
                 closeExpenseModal();
-                loadDashboard();
+                setTimeout(() => loadDashboard(), 500);
             } catch (error) {
                 console.error('Error:', error);
-                showMessage('errorMessage', '✗ Failed to add expense.');
+                showErrorMessage('✗ Failed to add expense. Please try again.');
             }
         });
 
         async function loadDashboard() {
             try {
+                showInfoMessage('📊 Refreshing dashboard data...');
+                
                 const ordersResponse = await fetch(SCRIPT_URL + '?action=getOrders');
                 const ordersResult = await ordersResponse.json();
                 if (ordersResult.status === 'success') {
@@ -983,8 +1012,10 @@
 
                 updateExpenseList();
                 updateDashboard();
+                showSuccessMessage('✓ Dashboard updated successfully!');
             } catch (error) {
                 console.error('Error loading dashboard:', error);
+                showErrorMessage('✗ Failed to load dashboard data');
             }
         }
 
@@ -1052,10 +1083,18 @@
             const uniqueOrders = new Set();
             
             orders.forEach(order => {
-                // Use Total Amount column (which is Unit Price * Quantity)
-                const totalAmount = parseFloat(order['Total Amount']) || 0;
+                // Support both old and new format
+                // NEW FORMAT: has 'Total Amount' column
+                // OLD FORMAT: has 'Price' column (which is the total)
+                const totalAmount = parseFloat(order['Total Amount']) || 
+                                  parseFloat(order['Price']) || 
+                                  0;
+                
                 const quantity = parseInt(order['Quantity']) || 1;
-                const profitMargin = getCurrentProfit(order['Dress Name'], order['Date']);
+                
+                const dressName = order['Dress Name'] || order['dress name'] || '';
+                const orderDate = order['Date'] || order['date'] || '';
+                const profitMargin = getCurrentProfit(dressName, orderDate);
                 
                 // Add to total sales
                 totalSales += totalAmount;
@@ -1063,15 +1102,15 @@
                 // Add to profit (profit per item * quantity)
                 totalProfit += (profitMargin * quantity);
                 
-                // Count unique orders by Order ID or Date+Client combination
-                const orderId = order['Order ID'] || (order['Date'] + order['Client Name']);
+                // Count unique orders
+                const orderId = order['Order ID'] || (orderDate + order['Client Name']);
                 uniqueOrders.add(orderId);
             });
             
             totalOrders = uniqueOrders.size;
             
             expenses.forEach(expense => {
-                totalExpenses += parseFloat(expense.Amount) || 0;
+                totalExpenses += parseFloat(expense.Amount) || parseFloat(expense.amount) || 0;
             });
             
             const netProfit = totalProfit - totalExpenses;
@@ -1110,8 +1149,10 @@
                     dressSummary[dress] = { count: 0, sales: 0, profit: 0 };
                 }
                 
-                // Use Total Amount from Excel (already calculated as Unit Price * Quantity)
-                const totalAmount = parseFloat(order['Total Amount']) || 0;
+                // Support both old and new format
+                const totalAmount = parseFloat(order['Total Amount']) || 
+                                  parseFloat(order['Price']) || 
+                                  0;
                 const quantity = parseInt(order['Quantity']) || 1;
                 const profitMargin = getCurrentProfit(dress, order['Date']);
                 
@@ -1276,10 +1317,12 @@
         function openProfitSettings() {
             renderSettingsForm();
             document.getElementById('profitModal').classList.add('show');
+            showInfoMessage('⚙️ Profit & Price Settings opened');
         }
 
         function closeProfitSettings() {
             document.getElementById('profitModal').classList.remove('show');
+            showInfoMessage('❌ Settings closed');
         }
 
         function renderSettingsForm() {
@@ -1373,6 +1416,8 @@
             });
             
             try {
+                showInfoMessage('💾 Saving settings...');
+                
                 await fetch(SCRIPT_URL, {
                     method: 'POST',
                     mode: 'no-cors',
@@ -1380,13 +1425,13 @@
                     body: JSON.stringify({ type: 'updateSettings', settings: settings })
                 });
                 
-                showMessage('successMessage', '✓ Settings saved successfully!');
+                showSuccessMessage('✓ Price & Profit settings saved successfully!');
                 closeProfitSettings();
                 await loadAllSettings();
                 updateDashboard();
             } catch (error) {
                 console.error('Error saving:', error);
-                showMessage('errorMessage', '✗ Failed to save settings.');
+                showErrorMessage('✗ Failed to save settings. Please try again.');
             }
         }
 
@@ -1416,10 +1461,12 @@
                 if (data.status === 'success') {
                     allOrdersData = data.orders;
                     displayOrders(allOrdersData);
+                    showSuccessMessage(`✓ Loaded ${allOrdersData.length} order(s)`);
                 }
             } catch (error) {
                 console.error('Error loading orders:', error);
                 document.getElementById('ordersLoading').innerHTML = '<p style="color: #f44336;">Failed to load orders</p>';
+                showErrorMessage('✗ Failed to load orders');
             }
         }
 
@@ -1438,10 +1485,14 @@
             // Sort by date (newest first)
             const sortedOrders = [...orders].sort((a, b) => new Date(b.Date) - new Date(a.Date));
             
-            tbody.innerHTML = sortedOrders.map(order => {
-                const orderId = order['Order ID'] || 'N/A';
-                const status = order['Status'] || 'Pending';
-                const statusClass = status.toLowerCase().replace(' ', '-');
+            tbody.innerHTML = sortedOrders.map((order, index) => {
+                // Support both old and new format
+                const orderId = order['Order ID'] || `ORD-${String(index + 1).padStart(4, '0')}`;
+                const status = order['Status'] || 'Production';
+                const totalAmount = parseFloat(order['Total Amount']) || parseFloat(order['Price']) || 0;
+                const quantity = parseInt(order['Quantity']) || 1;
+                const advancePayment = parseFloat(order['Advance Payment']) || 0;
+                const remainingAmount = parseFloat(order['Remaining Amount']) || 0;
                 
                 return `
                     <tr data-order-id="${orderId}">
@@ -1449,13 +1500,13 @@
                         <td>${order.Date || 'N/A'}</td>
                         <td>${order['Client Name'] || 'N/A'}</td>
                         <td>${order['Dress Name'] || 'N/A'}</td>
-                        <td>${order.Quantity || 1}</td>
-                        <td>₨${(parseFloat(order['Total Amount']) || 0).toLocaleString()}</td>
-                        <td>₨${(parseFloat(order['Advance Payment']) || 0).toLocaleString()}</td>
+                        <td>${quantity}</td>
+                        <td>₨${Math.round(totalAmount).toLocaleString()}</td>
+                        <td>₨${Math.round(advancePayment).toLocaleString()}</td>
                         <td>
                             <input type="number" 
                                    class="remaining-input" 
-                                   value="${parseFloat(order['Remaining Amount']) || 0}" 
+                                   value="${Math.round(remainingAmount)}" 
                                    data-order-id="${orderId}"
                                    style="width: 100px;">
                         </td>
